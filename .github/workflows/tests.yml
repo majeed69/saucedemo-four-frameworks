@@ -1,0 +1,93 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  selenium:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: selenium-python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: selenium-python/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: pytest
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: junit-selenium
+          path: selenium-python/reports/junit.xml
+
+  playwright:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: playwright
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: playwright/package-lock.json
+      - run: npm ci
+      # no "playwright install" step, the config uses the Chrome that's already on the runner
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: junit-playwright
+          path: playwright/reports/junit.xml
+
+  cypress:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cypress
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cypress/package-lock.json
+      # the npm cache doesn't include the Cypress app itself, which npm ci downloads separately
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-binary-${{ hashFiles('cypress/package-lock.json') }}
+      - run: npm ci
+      - run: npm run test:ci
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: junit-cypress
+          path: cypress/reports/junit.xml
+
+  webdriverio:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webdriverio
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: webdriverio/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: junit-webdriverio
+          path: webdriverio/reports/junit.xml
+
