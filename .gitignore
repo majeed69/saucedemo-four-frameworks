@@ -9,8 +9,6 @@ node_modules/
 # test output
 reports/
 test-results/
-playwright-report/
-cypress/videos/
 cypress/screenshots/
 
 .vscode/
