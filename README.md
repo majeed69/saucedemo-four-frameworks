@@ -81,3 +81,26 @@ A few things the table doesn't show:
 - **The slow runs.** In CI, one Playwright run spent about 17s starting Chrome, and one Selenium run took 15.5s on the checkout test instead of about 4s. Both passed, and the other runs of the same code were normal, so I put them down to the runner. I'd want more runs before calling any framework faster than another by a couple of seconds.
 - **Cypress startup.** Earlier the same evening, the whole Cypress command took 27 to 28s for the same 10s of tests. In the back to back runs above it was about 18s. It was the slowest locally either way.
 - **The 5 second freeze surprised me.** saucedemo freezes the page with a busy loop for `performance_glitch_user`. Selenium, Cypress and WebdriverIO all passed that test even with a 0.5 or 1 second timeout, because their commands are stuck while the page is frozen and their clocks only get checked afterwards. Playwright's timer runs in Node outside the page, so it was the only one that failed with a 5 second timeout. I gave all four a 10 second wait so none of them depend on where the freeze lands. The details are in [NOTES.md](NOTES.md).
+
+## Errors I ran into
+
+These all happened while I was building this. The longer versions, with how I tracked each one down, are in [NOTES.md](NOTES.md).
+
+| Framework | What I saw | Why | Fix |
+|---|---|---|---|
+| Selenium | `TimeoutException: Message:` (empty) waiting for the Checkout button, in 5 of 15 runs and later 9 of 12. Badge sometimes showed 1 or nothing. | Chrome's "change your password" warning. `secret_sauce` is in public breach lists, and the warning is browser UI that takes the next clicks. It doesn't show up in screenshots or the DOM. | Chrome pref `"profile.password_manager_leak_detection": False` in `conftest.py`. WebdriverIO sets the same pref by default, which is why it never failed. |
+| Playwright | `expect(locator).toBeVisible() failed ... Timeout: 5000ms` on the slow login. | `expect` retries for 5s by default and saucedemo freezes for 5s. | `{ timeout: 10_000 }` on that one assertion, not globally, so the other tests still fail fast. |
+| Playwright | `reports/junit.xml` said 1 failure after a green run. | Passing `--reporter=line` on the command line replaces the config's reporters, so the JUnit file wasn't rewritten. | Don't pass `--reporter` when you need the JUnit file. CI runs plain `npx playwright test`. |
+| Cypress | A failing test printed `Failing: 1` and nothing else. | `reporter: 'junit'` in the config replaces the normal terminal output. | Moved the reporter to a `test:ci` script so local runs show the error and CI still gets the XML. |
+| WebdriverIO | `WARN @wdio/xvfb: xvfb-run not found` on every run. | On Linux, WebdriverIO 9 tries to start a virtual display for headed Chrome. | `autoXvfb: false` in `wdio.conf.js`. |
+
+## Which one I'd pick
+
+There isn't one winner. It depends on who's writing the tests and what they're testing.
+
+- **A team already on Python, or already on Selenium.** Selenium. It's the most verbose of the four (70 lines against 38 to 47), and you write every wait yourself. But it speaks the WebDriver standard that every cloud grid supports, has bindings in most languages, and most existing suites I'd be asked to support are written in it. Rewriting a working Selenium suite to save 30 lines isn't worth it.
+- **A JavaScript or TypeScript team starting from nothing.** Playwright. It had the smallest install (one package, 11s), auto-waiting meant I wrote no waits at all, and it was the only one whose timeouts meant exactly what they said during the freeze.
+- **Front-end developers who'll write tests next to the app.** Cypress. It had the least test code (38 lines) and its retrying `should` reads well. The cost is the 822 MB download, the slowest startup, and the fact that it runs inside the page, which is fine for one app on one domain and awkward for anything else (multiple tabs, a second domain).
+- **A JavaScript team that needs WebDriver.** WebdriverIO. You get JavaScript and automatic waiting like Playwright, but on the same protocol as Selenium, so it works with the same grids and with Appium for mobile. The price is the heaviest setup here (5 packages that pull in 311, 22 lines of config, and audit warnings).
+
+If I had to support customers on all four, the thing I'd remember is how differently they wait. Most of what broke here, and most of what surprised me, came down to when each tool waits, for how long, and whose clock it's using.
