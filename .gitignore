@@ -1,0 +1,18 @@
+# python
+__pycache__/
+.venv/
+.pytest_cache/
+
+# node
+node_modules/
+
+# test output
+reports/
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+
+.vscode/
+.idea/
+.env
