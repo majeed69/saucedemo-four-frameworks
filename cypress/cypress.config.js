@@ -1,8 +1,6 @@
 const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
-  reporter: 'junit',
-  reporterOptions: { mochaFile: 'reports/junit.xml' },
   screenshotsFolder: 'screenshots',
   fixturesFolder: false,
   e2e: {

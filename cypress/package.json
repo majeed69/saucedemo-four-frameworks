@@ -2,7 +2,8 @@
   "name": "saucedemo-cypress",
   "private": true,
   "scripts": {
-    "test": "cypress run --browser chrome"
+    "test": "cypress run --browser chrome",
+    "test:ci": "cypress run --browser chrome --reporter junit --reporter-options mochaFile=reports/junit.xml"
   },
   "devDependencies": {
     "cypress": "16.2.0"

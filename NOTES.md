@@ -17,3 +17,11 @@ Not a failure, but it surprised me. Cypress's default timeout is 4s and saucedem
 **Cause:** I timed it. The login click returned in 212ms, then `cy.get('inventory-list', { timeout: 1000 })` took 5303ms and passed. Cypress runs inside the same browser tab as the app, on the same JavaScript thread, so while the page is frozen Cypress's timeout clock is frozen too. When the page wakes up, the next retry finds the list.
 
 **Fix:** none needed, but I set `{ timeout: 10000 }` anyway so the test doesn't rely on that quirk. If saucedemo ever switched to an async delay, the default 4s would fail.
+
+## Cypress: failing test with no error message
+
+**Error:** I broke a price in the data file to make sure the subtotal check fails. The run summary said `Failing: 1` and that was it. No assertion, no expected vs received.
+
+**Cause:** I had `reporter: 'junit'` in `cypress.config.js`. That reporter replaces the normal spec output in the terminal, so the reason only ends up inside `reports/junit.xml`.
+
+**Fix:** took the reporter out of the config and added a `test:ci` npm script that passes `--reporter junit` on the command line. `npm test` locally prints the normal output (`Timed out retrying after 4000ms: expected ... to have text 'Item total: $39.97', but the text was 'Item total: $39.98'`), and CI still gets the XML file with the same message in it.
