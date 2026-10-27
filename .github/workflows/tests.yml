@@ -91,3 +91,14 @@ jobs:
           name: junit-webdriverio
           path: webdriverio/reports/junit.xml
 
+  compare:
+    needs: [selenium, playwright, cypress, webdriverio]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: junit-*
+          path: junit
+      - run: python3 scripts/compare_runs.py junit >> "$GITHUB_STEP_SUMMARY"
