@@ -1,0 +1,21 @@
+{
+  "password": "secret_sauce",
+  "users": {
+    "standard": "standard_user",
+    "lockedOut": "locked_out_user",
+    "performanceGlitch": "performance_glitch_user"
+  },
+  "products": [
+    { "name": "Sauce Labs Backpack", "slug": "sauce-labs-backpack", "price": 29.99 },
+    { "name": "Sauce Labs Bike Light", "slug": "sauce-labs-bike-light", "price": 9.99 }
+  ],
+  "customer": {
+    "firstName": "Test",
+    "lastName": "Buyer",
+    "postalCode": "560001"
+  },
+  "messages": {
+    "lockedOut": "Epic sadface: Sorry, this user has been locked out.",
+    "orderComplete": "Thank you for your order!"
+  }
+}
