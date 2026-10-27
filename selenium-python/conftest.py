@@ -22,6 +22,9 @@ def driver():
     if os.environ.get("CI"):
         options.add_argument("--headless=new")
     options.add_argument("--window-size=1280,900")
+    # Chrome's "change your password" breach warning pops up after logging in with
+    # secret_sauce and swallows the next clicks, which made checkout fail at random
+    options.add_experimental_option("prefs", {"profile.password_manager_leak_detection": False})
     driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
