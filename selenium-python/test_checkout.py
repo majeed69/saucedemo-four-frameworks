@@ -27,3 +27,19 @@ def test_checkout_as_standard_user(driver, wait, login, data):
     driver.find_element(*by_test("finish")).click()
     header = wait.until(EC.visibility_of_element_located(by_test("complete-header")))
     assert header.text == data["messages"]["orderComplete"]
+
+
+def test_locked_out_user_sees_an_error(wait, login, data):
+    login(data["users"]["lockedOut"])
+
+    error = wait.until(EC.visibility_of_element_located(by_test("error")))
+    assert error.text == data["messages"]["lockedOut"]
+
+
+def test_slow_login_still_works(driver, wait, login, data):
+    login(data["users"]["performanceGlitch"])
+
+    # saucedemo freezes the inventory page for a fixed 5s for this user, so the
+    # 10s explicit wait has room to spare and returns as soon as the list shows
+    wait.until(EC.visibility_of_element_located(by_test("inventory-list")))
+    assert driver.current_url.endswith("/inventory.html")
