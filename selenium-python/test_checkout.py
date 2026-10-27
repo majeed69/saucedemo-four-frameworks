@@ -39,7 +39,8 @@ def test_locked_out_user_sees_an_error(wait, login, data):
 def test_slow_login_still_works(driver, wait, login, data):
     login(data["users"]["performanceGlitch"])
 
-    # saucedemo freezes the inventory page for a fixed 5s for this user, so the
-    # 10s explicit wait has room to spare and returns as soon as the list shows
+    # saucedemo freezes the page for 5s for this user. The find_element call inside
+    # the wait blocks until the page unfreezes, so even a short timeout would pass,
+    # but I don't want the test to depend on where the freeze happens to land
     wait.until(EC.visibility_of_element_located(by_test("inventory-list")))
     assert driver.current_url.endswith("/inventory.html")
